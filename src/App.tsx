@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { API_BASE } from "./const/api.const";
-import type { MenuItem, NowPlaying, PlaylistResponse, QueueItem, Song } from "./types/song.type";
+import type { NowPlaying, PlaylistResponse, QueueItem, Song } from "./types/song.type";
 import SongRow from "./components/SongRow";
 import { fmt, secondsOf } from "./helpers/index.helper";
 import { Cover, Icon } from "./components/Pieces";
@@ -25,14 +25,15 @@ async function request(path: string, init: RequestInit = {}): Promise<unknown> {
 const body = (data: unknown) => JSON.stringify(data);
 
 const api = {
-  getPlaylist: () => request("/playlist") as Promise<PlaylistResponse>,
+  getPlaylist: () => request("") as Promise<PlaylistResponse>,
   movePlaylist: (id: number, targetIndex: number) =>
     request(`/playlist/${id}`, { method: "PATCH", body: body({ id, target_index: targetIndex }) }),
   addPlaylist: (id: number) => request("/playlist/", { method: "POST", body: body({ id }) }),
   removePlaylist: (id: number) => request("/playlist/", { method: "DELETE", body: body({ id }) }),
   addPriority: (id: number) => request("/priority/", { method: "POST", body: body({ id }) }),
-  next: () => request("/next", { method: "POST" }),
-  prev: () => request("/prev", { method: "POST" }),
+  next: () => request("/action/next", { method: "POST" }),
+  prev: () => request("/action/prev", { method: "POST" }),
+  play : (id : number) => request("/action", {method : "POST", body : body({id})})
 };
 
 export default function App() {
@@ -154,7 +155,9 @@ export default function App() {
     else setPlaying((p) => !p);
   };
 
-  const playFromPlaylist = (i: number) => {
+  const playFromPlaylist = async (i: number, id : number) => {
+    await api.play(id);
+
     const song = playlist[i];
     if (!song) return;
     if (current?.source === "playlist" && current.song.id === song.id) {
@@ -168,7 +171,7 @@ export default function App() {
 
   const playFromSongList = (song: Song) => {
     const i = playlist.findIndex((s) => s.id === song.id);
-    if (i >= 0) playFromPlaylist(i);
+    if (i >= 0) playFromPlaylist(i, song.id);
     else setModalSong(song);
   };
 
@@ -297,7 +300,7 @@ export default function App() {
                 <p className="text-neutral-400">Memuat musik anda…</p>
               ) : (
                 <>
-                  <p className="text-white">Tidak dapat memuat GET {API_BASE}/playlist.</p>
+                  <p className="text-white">Tidak dapat memuat musik</p>
                   <button
                     onClick={() => void load()}
                     className="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-500"
@@ -348,7 +351,7 @@ export default function App() {
                         index={i + 1}
                         active={active}
                         playing={playing}
-                        onPlay={() => playFromPlaylist(i)}
+                        onPlay={() => playFromPlaylist(i, song.id)}
                         menuLabel={`Options for ${song.judul}`}
                         className={`${dragFrom === i ? "opacity-40" : ""} ${dropping ? "ring-2 ring-red-500/70" : ""}`}
                         extra={{
@@ -370,7 +373,7 @@ export default function App() {
                           onDragEnd: clearDrag,
                         }}
                         menu={[
-                          { label: "Play", onClick: () => playFromPlaylist(i) },
+                          { label: "Play", onClick: () => playFromPlaylist(i, song.id) },
                           { label: "Play next", onClick: () => playNext(song) },
                           { label: "Move up", onClick: () => movePlaylist(i, i - 1), disabled: i === 0 },
                           {

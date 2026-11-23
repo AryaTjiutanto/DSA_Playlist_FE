@@ -25,14 +25,14 @@ async function request(path: string, init: RequestInit = {}): Promise<unknown> {
 const body = (data: unknown) => JSON.stringify(data);
 
 const api = {
-  getPlaylist: () => request("") as Promise<PlaylistResponse>,
+  getPlaylist: () => request("/playlist") as Promise<PlaylistResponse>,
   movePlaylist: (id: number, targetIndex: number) =>
     request(`/playlist/${id}`, { method: "PATCH", body: body({ id, target_index: targetIndex }) }),
-  addPlaylist: (id: number) => request("/playlist/", { method: "POST", body: body({ id }) }),
-  removePlaylist: (id: number) => request("/playlist/", { method: "DELETE", body: body({ id }) }),
-  addPriority: (id: number) => request("/priority/", { method: "POST", body: body({ id }) }),
-  next: () => request("/action/next", { method: "POST" }),
-  prev: () => request("/action/prev", { method: "POST" }),
+  addPlaylist: (id: number) => request("/playlist", { method: "POST", body: body({ id }) }),
+  removePlaylist: (id: number) => request("/playlist", { method: "DELETE", body: body({ id }) }),
+  addPriority: (id: number) => request("/priority", { method: "POST", body: body({ id }) }),
+  next: () => request("/next", { method: "POST" }),
+  prev: () => request("/prev", { method: "POST" }),
   play : (id : number) => request("/action", {method : "POST", body : body({id})})
 };
 
